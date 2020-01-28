@@ -1,0 +1,39 @@
+  public List<Ride> FindPreviousRide(string from, string to, int numberOfPassengers)
+        {
+            List<Ride> matchedRides = Rides.FindAll(obj => obj.From == from && obj.To == to);
+            List<Ride> unmatchedRides = Rides.FindAll(obj => obj.From != from || obj.To != to);
+            foreach (Ride ride in unmatchedRides)
+            {
+                string viaPointFrom = ride.ViaPoints.FirstOrDefault(obj => obj == from || obj == ride.From);
+                string viaPointTo = ride.ViaPoints.FirstOrDefault(obj => obj == to || obj == ride.To);
+                if (viaPointFrom != null && viaPointTo != null) matchedRides.Add(ride);
+                else if (viaPointFrom != null && ride.To == to) matchedRides.Add(ride);
+                else if (viaPointTo != null && ride.From == from) matchedRides.Add(ride);
+            }
+            return matchedRides;
+        }
+
+        public bool MatchedViaPointTo(Ride ride,string viaPointTo,int numberOfPassengers)
+        {
+            int index = ride.ViaPoints.IndexOf(viaPointTo);
+            int numberOfBookings = 0;
+            for(int i=index;i<ride.ViaPoints.Count;i++)
+            {
+                numberOfBookings += bookingService.GetBookingsCount(ride.Id, ride.From, ride.ViaPoints[i]);
+            }
+            numberOfBookings += bookingService.GetBookingsCount(ride.Id, ride.From, ride.To);
+            if (ride.NumberOfSeats - numberOfBookings >= numberOfPassengers)
+            {
+                //for(int i=0;i<=index;i++)
+                for(int i=0;i<ride.ViaPoints.Count;i++)
+                {
+                    numberOfBookings+= bookingService.GetBookingsCount(ride.Id, ride.From, ride.ViaPoints[i]);
+                    for (int j=index+1;j<ride.ViaPoints.Count;j++)
+                    {
+                        numberOfBookings += bookingService.GetBookingsCount(ride.Id, ride.ViaPoints[i], ride.ViaPoints[j]);
+                    }
+                }
+                if (ride.NumberOfSeats - numberOfBookings >= numberOfPassengers) return true;
+            }
+            return false;
+        }

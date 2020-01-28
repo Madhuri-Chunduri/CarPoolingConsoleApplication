@@ -1,0 +1,46 @@
+Console.WriteLine("Currently you have offered " + offeredRides[rideNumber - 1].NumberOfSeats + " seats");
+                    int choice = commonMethods.ReadInt("Do you want to update number of seats : 1. Yes 2. No >> ");
+                    choice = commonMethods.IsValidChoice(choice);
+                    if (choice == 2) commonMethods.FurtherAction(1);
+                    else
+                    {
+                        int newNumberOfSeats = commonMethods.ReadInt("Enter the new number of seats : ");
+                        int numberOfBookings = bookingService.GetBookingsCount(offeredRides[rideNumber - 1].Id, offeredRides[rideNumber - 1].From, offeredRides[rideNumber - 1].To);
+                       
+                        if (newNumberOfSeats < numberOfBookings)
+                        {
+                            Console.WriteLine("By updating number of seats, you may need to cancel some of the rides..");
+                            int decision = commonMethods.ReadInt("Do you want to update seats ? 1. Yes 2. No >> ");
+                            decision = commonMethods.IsValidChoice(decision);
+                            if (decision == 1)
+                            {
+                                while (newNumberOfSeats < numberOfBookings)
+                                {
+                                    List<Booking> bookings = bookingService.GetBookingsByRideId(offeredRides[rideNumber - 1].Id);
+                                    int bookingNumber = 1;
+                                    foreach (Booking booking in bookings)
+                                    {
+                                        User Customer = userService.GetUser(booking.BookedBy);
+                                        Console.WriteLine(bookingNumber + ". Booked By :  " + Customer.Name + "| Pick-Up : " + booking.From + "| Drop : "
+                                            + booking.To + "| Status : " + Enum.GetName(typeof(BookingStatus), booking.Status));
+                                    }
+                                    int deleteBookingNumber = commonMethods.ReadInt("Enter the booking number you want to delete : ");
+                                    while (deleteBookingNumber < 1 || deleteBookingNumber > numberOfBookings)
+                                    {
+                                        deleteBookingNumber = commonMethods.ReadInt("Please enter a valid booking number : ");
+                                    }
+                                    bookingService.CancelBookingById(bookings[deleteBookingNumber - 1].Id);
+                                    //Notify the person about cancellation of booking
+                                    numberOfBookings -= bookings[deleteBookingNumber-1].NumberOfSeatsBooked;
+                                }
+                                Console.WriteLine("Number of seats updated successfully!!");
+                                commonMethods.FurtherAction(1);
+                                offeredRides[rideNumber - 1].NumberOfSeats = newNumberOfSeats;
+                                offeredRides[rideNumber - 1].AvailableSeats = newNumberOfSeats - numberOfBookings;
+                                rideService.UpdateRide(offeredRides[rideNumber - 1]);
+                            }
+                            else commonMethods.FurtherAction(1);
+                        }
+                        else commonMethods.FurtherAction(1);
+                    }
+                        break;
