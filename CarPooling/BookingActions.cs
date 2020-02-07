@@ -1,6 +1,6 @@
-﻿using CarPooling.Interfaces;
-using CarPooling.Models;
-using CarPooling.Services;
+﻿using CarPooling.Concerns;
+using CarPooling.Contracts;
+using CarPooling.Providers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,9 +11,10 @@ namespace CarPooling
     {
         IBookingService bookingService = new BookingService();
         RideActions rideActions = new RideActions();
-        IRideService rideService = new RideService();
+        IRideService rideService =new RideService();
         CommonMethods commonMethods = new CommonMethods();
         IUserService userService = new UserService();
+        IVehicleService vehicleService = new VehicleService();
 
         public void ViewOfferBookings()
         {
@@ -32,8 +33,8 @@ namespace CarPooling
                 foreach (Ride ride in offeredRides)
                 {
                     double totalIncome = bookingService.GetTotalIncomeOfRide(ride);
-                    Console.WriteLine(rideNumber + ". " + " From : " + ride.From + " To :  " + ride.To + " Total Seats : " + ride.NumberOfSeats+" Total Income : "+totalIncome);
-                    Console.WriteLine(" Date of Ride : " + ride.Date.ToShortDateString() +  ride.Date.TimeOfDay + " Vehicle Name : " + ride.Vehicle.Name + " Ride Status : " + Enum.GetName(typeof(RideStatus), ride.Status));
+                    Console.WriteLine(rideNumber + ". " + " From : " + ride.PickUp + " To :  " + ride.Drop + " Total Seats : " + ride.NumberOfSeats+" Total Income : "+totalIncome);
+                    Console.WriteLine(" Date of Ride : " + ride.Date.ToShortDateString() +  ride.Date.TimeOfDay + " Vehicle Name : " + ride.Vehicle.Model+ " Ride Status : " + Enum.GetName(typeof(RideStatus), ride.Status));
                     rideNumber += 1;
                     Console.WriteLine("-----------------------------------------------------");
                 }
@@ -69,7 +70,7 @@ namespace CarPooling
             foreach (Booking booking in bookings)
             {
                 User Customer = userService.GetUser(booking.BookedBy);
-                Console.WriteLine(bookingNumber + " \t\t|" + Customer.Name + " \t|  " + booking.From + " \t  |" + booking.To + "\t   |" + booking.Price + "\t   |" + booking.NumberOfSeatsBooked + "\t\t\t\t|" +
+                Console.WriteLine(bookingNumber + " \t\t|" + Customer.Name + " \t|  " + booking.PickUp + " \t  |" + booking.Drop + "\t   |" + booking.Price + "\t   |" + booking.NumberOfSeatsBooked + "\t\t\t\t|" +
                    Enum.GetName(typeof(BookingStatus), booking.Status));
                 Console.WriteLine("------------------------------------------------------------------------------------------------------------------");
                 bookingNumber += 1;
@@ -99,8 +100,8 @@ namespace CarPooling
                     {
                         approveBookingNumber = commonMethods.ReadInt("Please enter a valid choice between 1 and " + bookings.Count + " : ");
                     }
-
-                    bookingService.RejectBooking(bookings[rejectBookingNumber - 1].Id);
+                    bookings[rejectBookingNumber - 1].Status = (BookingStatus)3;
+                    bookingService.UpdateBooking(bookings[rejectBookingNumber - 1]);
 
                     Console.WriteLine("Booking rejected successfully!!!");
 
@@ -153,15 +154,15 @@ namespace CarPooling
                 Id = Guid.NewGuid().ToString(),
                 BookedBy = LoginActions.currentUser.Id,
                 RideId = ride.Id,
-                From = from,
-                To = to,
+                PickUp = from,
+                Drop = to,
                 Price=price,
                 NumberOfSeatsBooked = numberOfPassengers,
                 Status = (ride.AutoApproveRide) ? (BookingStatus)0 : (BookingStatus)1,
             };
             bookingService.AddBooking(booking);
             Console.WriteLine("Booking Successful!!!");
-            if (ride.AutoApproveRide == false) Console.WriteLine("You will get a notification as soon as the ride gets approved by the Publisher!!");
+            if (ride.AutoApproveRide == false) Console.WriteLine("You can see the booking status at View Your Bookings option in dashboard..");
             commonMethods.FurtherAction(1);
         }
 
@@ -176,13 +177,13 @@ namespace CarPooling
             if (bookings.Count == 1)
             {
                 Booking booking = bookings[0];
-                Ride bookedRide = rideService.GetRide(bookings[0].RideId);
+                Ride bookedRide = rideService.GetRideById(bookings[0].RideId);
                 Console.WriteLine("You have booked only one ride!!");
                 User Publisher = userService.GetUser(bookedRide.PublisherId);
 
                 Console.WriteLine(" Publisher Name : " + Publisher.Name + " | Total Booked Seats : " + booking.NumberOfSeatsBooked + " | Pick- up : "
-                    + booking.From + " | Drop : " + booking.To + " | Fare : " + booking.Price);
-                Console.WriteLine("   Time of Ride : " + bookedRide.Date.ToShortDateString() + bookedRide.Date.TimeOfDay + " | Vehicle Name : " + bookedRide.Vehicle.Name + " | Ride Status : "
+                    + booking.PickUp + " | Drop : " + booking.Drop + " | Fare : " + booking.Price);
+                Console.WriteLine("   Time of Ride : " + bookedRide.Date.ToShortDateString() + bookedRide.Date.TimeOfDay + " | Vehicle Name : " + bookedRide.Vehicle.Model + " | Ride Status : "
                     + Enum.GetName(typeof(RideStatus), bookedRide.Status) + " | Booking Status : " + Enum.GetName(typeof(BookingStatus), booking.Status));
                 Console.WriteLine("-------------------------------------------------------------------------------------------------");
 
@@ -199,11 +200,12 @@ namespace CarPooling
 
             foreach (Booking booking in bookings)
             {
-                Ride bookedRide = bookingService.GetRideById(booking.RideId);
+                Ride bookedRide = rideService.GetRideById(booking.RideId);
                 User Publisher = userService.GetUser(bookedRide.PublisherId);
+
                 Console.WriteLine(rideNumber + "   |" + Publisher.Name + "\t\t|" + booking.NumberOfSeatsBooked + " \t\t|"
-                    + booking.From + " \t| " + booking.To + " \t| " + booking.Price + " \t|"
-                    + bookedRide.Date.ToShortDateString() + bookedRide.Date.TimeOfDay + " | " + bookedRide.Vehicle.Name + ""
+                    + booking.PickUp + " \t| " + booking.Drop + " \t| " + booking.Price + " \t|"
+                    + bookedRide.Date.ToShortDateString() + bookedRide.Date.TimeOfDay + " | " + bookedRide.Vehicle.Model + ""
                     + " \t|" + Enum.GetName(typeof(RideStatus), bookedRide.Status) + " \t| " + Enum.GetName(typeof(BookingStatus), booking.Status));
                 Console.WriteLine("-----------------------------------------------------------------------------------------------------------------------------------------------------");
                 rideNumber += 1;
@@ -260,12 +262,12 @@ namespace CarPooling
 
         public RideType GetRideType(Ride ride,string from,string to)
         {
-            if (ride.From == from)
+            if (ride.PickUp == from)
             {
-                if (ride.To == to) return 0;
+                if (ride.Drop == to) return 0;
                 else return (RideType)2;
             }
-            else if (ride.To == to)
+            else if (ride.Drop == to)
             {
                 return (RideType)1;
             }
@@ -276,7 +278,8 @@ namespace CarPooling
         {
             if (booking.Status == 0 || booking.Status == (BookingStatus)1)
             {
-                bookingService.CancelBookingById(booking.Id);
+                booking.Status = (BookingStatus)2;
+                bookingService.UpdateBooking(booking);
                 Console.WriteLine("Booking Cancelled  Successfully!!");
                 commonMethods.FurtherAction(1);
             }
@@ -296,20 +299,21 @@ namespace CarPooling
             {
                 decision = commonMethods.ReadInt("Please enter a valid choice between 1 and 4 : ");
             }
-            Ride ride = rideService.GetRide(booking.RideId);
+            Ride ride = rideService.GetRideById(booking.RideId);
 
             switch(decision)
             {
                 case 1: string newFrom = commonMethods.ReadString("Enter the modified Pick-up point : ");
-                    bool isFromExists = rideService.IsRidePointCovered(ride,newFrom);
+                    bool isFromExists = IsRidePointCovered(ride,newFrom);
                     if(isFromExists==true)
                     {
                         BookingStatus bookingStatus = booking.Status;
-                        bookingService.CancelBookingById(booking.Id);
+                        booking.Status=(BookingStatus)2;
+                        bookingService.UpdateBooking(booking);
                         int availableSeats = GetAvailableSeats(ride, booking);
                         if(availableSeats<booking.NumberOfSeatsBooked)
                         {
-                            Console.WriteLine("There are not enough seats between " + newFrom + " and " + booking.To);
+                            Console.WriteLine("There are not enough seats between " + newFrom + " and " + booking.Drop);
                             Console.WriteLine("You cannot update this booking!!");
                             booking.Status = bookingStatus;
                             bookingService.UpdateBooking(booking);
@@ -319,7 +323,7 @@ namespace CarPooling
                         }
                         else
                         {
-                            booking.From = newFrom;
+                            booking.PickUp = newFrom;
                             if (ride.AutoApproveRide == false) booking.Status = (BookingStatus)1;
                             else booking.Status = bookingStatus;
                             bookingService.UpdateBooking(booking);
@@ -339,15 +343,16 @@ namespace CarPooling
 
                 case 2:
                     string newTo = commonMethods.ReadString("Enter the modified drop point : ");
-                    bool isToExists = rideService.IsRidePointCovered(ride,newTo);
+                    bool isToExists = IsRidePointCovered(ride,newTo);
                     if (isToExists == true)
                     {
                         BookingStatus bookingStatus = booking.Status;
-                        bookingService.CancelBookingById(booking.Id);
+                        booking.Status=(BookingStatus)2;
+                        bookingService.UpdateBooking(booking);
                         int availableSeats = GetAvailableSeats(ride, booking);
                         if (availableSeats < booking.NumberOfSeatsBooked)
                         {
-                            Console.WriteLine("There are not enough seats between " + booking.From + " and " + newTo);
+                            Console.WriteLine("There are not enough seats between " + booking.PickUp + " and " + newTo);
                             Console.WriteLine("You cannot update this booking!!");
                             booking.Status = bookingStatus;
                             bookingService.UpdateBooking(booking);
@@ -357,7 +362,7 @@ namespace CarPooling
                         }
                         else
                         {
-                            booking.To = newTo;
+                            booking.Drop = newTo;
                             if (ride.AutoApproveRide == false) booking.Status = (BookingStatus)1;
                             else booking.Status = bookingStatus;
                             bookingService.UpdateBooking(booking);
@@ -392,11 +397,12 @@ namespace CarPooling
                     else
                     {
                         BookingStatus bookingStatus = booking.Status;
-                        bookingService.CancelBookingById(booking.Id);
+                        booking.Status=(BookingStatus)2;
+                        bookingService.UpdateBooking(booking);
                         int availableSeats = GetAvailableSeats(ride, booking);
                         if (availableSeats < newNumberOfSeats)
                         {
-                            Console.WriteLine("There are not enough seats between " + booking.From + " and " + booking.To);
+                            Console.WriteLine("There are not enough seats between " + booking.PickUp + " and " + booking.Drop);
                             Console.WriteLine("You cannot update this booking!!");
                             booking.Status= bookingStatus;
                             bookingService.UpdateBooking(booking);
@@ -444,7 +450,8 @@ namespace CarPooling
                     {
                         if (availableSeats >= booking.NumberOfSeatsBooked)
                         {
-                            bookingService.ApproveBooking(booking.Id);
+                            booking.Status = (BookingStatus)0;
+                            bookingService.UpdateBooking(booking);
                             Console.WriteLine("Booking is approved!!");
                         }
                         else
@@ -464,28 +471,35 @@ namespace CarPooling
 
         public int GetAvailableSeats(Ride ride, Booking booking)
         {
-            RideType rideType = GetRideType(ride, booking.From, booking.To);
+            RideType rideType = GetRideType(ride, booking.PickUp, booking.Drop);
 
             int availableSeats = 0;
 
             switch (rideType)
             {
                 case 0:
-                    availableSeats = bookingService.AreSeatsAvailable(ride);
+                    availableSeats = bookingService.AvailableSeats(ride,ride.PickUp,ride.Drop);
                     break;
                 case (RideType)1:
-                    availableSeats = bookingService.AreSeatsAvailableFromViaPoint(ride, booking.From);
+                    availableSeats = bookingService.AvailableSeats(ride, booking.PickUp,ride.Drop);
                     break;
                 case (RideType)2:
-                    availableSeats = bookingService.AreSeatsAvailableToViaPoint(ride, booking.To);
+                    availableSeats = bookingService.AvailableSeats(ride,ride.PickUp, booking.Drop);
                     break;
                 case (RideType)3:
-                    availableSeats = bookingService.AreSeatsAvailableBetweenViaPoints(ride, booking.From, booking.To);
+                    availableSeats = bookingService.AvailableSeats(ride, booking.PickUp, booking.Drop);
                     break;
             }
             return availableSeats;
         }
 
-}
+        public bool IsRidePointCovered(Ride ride, string ridePoint)
+        {
+            if (ride.PickUp == ridePoint || ride.Drop == ridePoint) return true;
+            if (ride.ViaPoints.Contains(ridePoint)) return true;
+            return false;
+        }
+
+    }
 }
  

@@ -1,6 +1,6 @@
-﻿using CarPooling.Interfaces;
-using CarPooling.Models;
-using CarPooling.Services;
+﻿using CarPooling.Contracts;
+using CarPooling.Concerns;
+using CarPooling.Providers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -66,7 +66,7 @@ namespace CarPooling
                 IVehicleService vehicleService = new VehicleService();
                 Vehicle vehicle = new Vehicle();
                 vehicle.UserId = user.Id;
-                vehicle.Name = commonMethods.ReadString("Enter your Vehicle Name : ");
+                vehicle.Model = commonMethods.ReadString("Enter your Vehicle Model : ");
                 vehicle.Number = commonMethods.ReadString("Enter your Vehicle Number : ");
                 vehicleService.AddVehicle(vehicle);
             }

@@ -1,0 +1,17 @@
+E:\madhuri\CarPooling\CarPooling.API\bin\Release\netcoreapp2.1\CarPooling.API.deps.json
+E:\madhuri\CarPooling\CarPooling.API\bin\Release\netcoreapp2.1\CarPooling.API.runtimeconfig.json
+E:\madhuri\CarPooling\CarPooling.API\bin\Release\netcoreapp2.1\CarPooling.API.runtimeconfig.dev.json
+E:\madhuri\CarPooling\CarPooling.API\bin\Release\netcoreapp2.1\CarPooling.API.dll
+E:\madhuri\CarPooling\CarPooling.API\bin\Release\netcoreapp2.1\CarPooling.API.pdb
+E:\madhuri\CarPooling\CarPooling.API\bin\Release\netcoreapp2.1\CarPooling.dll
+E:\madhuri\CarPooling\CarPooling.API\bin\Release\netcoreapp2.1\CarPooling.pdb
+E:\madhuri\CarPooling\CarPooling.API\obj\Release\netcoreapp2.1\CarPooling.API.csprojAssemblyReference.cache
+E:\madhuri\CarPooling\CarPooling.API\obj\Release\netcoreapp2.1\CarPooling.API.csproj.CoreCompileInputs.cache
+E:\madhuri\CarPooling\CarPooling.API\obj\Release\netcoreapp2.1\CarPooling.API.RazorAssemblyInfo.cache
+E:\madhuri\CarPooling\CarPooling.API\obj\Release\netcoreapp2.1\CarPooling.API.RazorAssemblyInfo.cs
+E:\madhuri\CarPooling\CarPooling.API\obj\Release\netcoreapp2.1\CarPooling.API.AssemblyInfoInputs.cache
+E:\madhuri\CarPooling\CarPooling.API\obj\Release\netcoreapp2.1\CarPooling.API.AssemblyInfo.cs
+E:\madhuri\CarPooling\CarPooling.API\obj\Release\netcoreapp2.1\CarPooling.API.RazorTargetAssemblyInfo.cache
+E:\madhuri\CarPooling\CarPooling.API\obj\Release\netcoreapp2.1\CarPooling.API.csproj.CopyComplete
+E:\madhuri\CarPooling\CarPooling.API\obj\Release\netcoreapp2.1\CarPooling.API.dll
+E:\madhuri\CarPooling\CarPooling.API\obj\Release\netcoreapp2.1\CarPooling.API.pdb

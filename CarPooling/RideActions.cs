@@ -1,6 +1,6 @@
-﻿using CarPooling.Interfaces;
-using CarPooling.Models;
-using CarPooling.Services;
+﻿using CarPooling.Concerns;
+using CarPooling.Contracts;
+using CarPooling.Providers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,10 +11,11 @@ namespace CarPooling
     {
         CommonMethods commonMethods = new CommonMethods();
         VehicleActions vehicleActions = new VehicleActions();
-        IRideService rideService = new RideService();
+        IRideService rideService =new RideService();
         IVehicleService vehicleService = new VehicleService();
         IUserService userService = new UserService();
         IBookingService bookingService = new BookingService();
+        IVehicleTypeService vehicleTypeService = new VehicleTypeService();
 
         public void FindARide()
         {
@@ -36,10 +37,12 @@ namespace CarPooling
                 {
                     continue;
                 }
+
                 User publisher = userService.GetUser(ride.PublisherId);
+
                 Console.WriteLine("----------------------------------------------------------------------------------------------------------------------");
-                Console.WriteLine(rideNumber + "\t\t|" + publisher.Name + "    \t|" +ride.NumberOfSeats+"\t\t|"+ride.AvailableSeats+"\t\t|"+ride.From+" \t|"+ride.To+"\t|"+ride.Date.ToShortDateString().ToString()
-                    +" "+ride.Date.TimeOfDay.ToString()+"\t|"+ride.Vehicle.Name);
+                Console.WriteLine(rideNumber + "\t\t|" + publisher.Name + "    \t|" +ride.NumberOfSeats+"\t\t|"+ride.AvailableSeats+"\t\t|"+ride.PickUp+" \t|"+ride.Drop+"\t|"+ride.Date.ToShortDateString().ToString()
+                    +" "+ride.Date.TimeOfDay.ToString()+"\t|"+ride.Vehicle.Model);
                 rideNumber += 1;
             }
 
@@ -117,15 +120,31 @@ namespace CarPooling
             }
             Ride ride = new Ride();
             ride.Id = Guid.NewGuid().ToString();
-            ride.From = commonMethods.ReadString("Enter your source of ride : ");
-            ride.To = commonMethods.ReadString("Enter your destination of ride : ");
+            ride.PickUp = commonMethods.ReadString("Enter your source of ride : ");
+            ride.Drop = commonMethods.ReadString("Enter your destination of ride : ");
             ride.Date = ReadDateTime();
             ride.PublisherId = LoginActions.currentUser.Id;
+
+            List<VehicleType> vehicleTypes = vehicleTypeService.GetAllTypes();
+            int count = 0;
+            Console.WriteLine("Serial Number | Type \t | Maximum Fare | Maximum Seats");
+            foreach (VehicleType vehicleType in vehicleTypes)
+            {
+                ++count;
+                Console.WriteLine(count+"\t"+vehicleType.Type + "" + vehicleType.MaximumFare + "\t" + vehicleType.MaximumSeats);
+            }
+
+            int vehicleTypeChoice = commonMethods.ReadInt("Choose your vehicle type from above types : ");
+            while(vehicleTypeChoice<0 || vehicleTypeChoice>count)
+            {
+                vehicleTypeChoice = commonMethods.ReadInt("Please enter a valid choice : ");
+            }
+            ride.VehicleType = vehicleTypes[vehicleTypeChoice - 1];
             ride.NumberOfSeats = commonMethods.ReadInt("Enter the number of seats available for the ride : ");
-            while(ride.NumberOfSeats>4 || ride.NumberOfSeats < 1)
+            while(ride.NumberOfSeats> ride.VehicleType.MaximumSeats || ride.NumberOfSeats < 1)
             {
                 if (ride.NumberOfSeats < 1) Console.WriteLine("There should be atleast one seat in the ride");
-                else Console.WriteLine("You cannot have more than 4 seats");
+                else Console.WriteLine("You cannot have more than "+ ride.VehicleType.MaximumSeats+" seats");
                 ride.NumberOfSeats = commonMethods.ReadInt(" Please enter valid number of seats : ");
             }
             ride.AvailableSeats = ride.NumberOfSeats;
@@ -134,14 +153,57 @@ namespace CarPooling
             ride.AutoApproveRide = (autoApprove == 1) ? true : false;
 
             ride.Price = commonMethods.ReadDouble("Enter the price of the ride : ");
+            while(ride.Price>ride.VehicleType.MaximumFare)
+            {
+                Console.WriteLine("Fare for the ride should not be greater than " + ride.VehicleType.MaximumFare);
+                ride.Price = commonMethods.ReadDouble("Please enter a valid price : ");
+            }
 
             ride.Status = (RideStatus)0;
 
-            ride.ViaPoints = new List<string>();
+            List<Vehicle> vehicles = vehicleService.GetVehiclesByUserId(LoginActions.currentUser.Id);
+            if (vehicles.Count == 1)
+            {
+                Console.WriteLine(" Vehicle Model : " + vehicles[0].Model);
+                choice = commonMethods.ReadInt("Do you want to offer ride with above vehicle : 1. Yes 2. No >> ");
+                choice = commonMethods.IsValidChoice(choice);
+                if (choice == 1) ride.Vehicle = vehicles[0];
+                else ride.Vehicle = vehicleActions.AddVehicle();
+            }
+            else if (vehicles.Count == 0)
+            {
+                ride.Vehicle = vehicleActions.AddVehicle();
+            }
+            else
+            {
+                int optionNumber = 1;
+                foreach (Vehicle vehicle in vehicles)
+                    Console.WriteLine(optionNumber + ". Vehicle Model : " + vehicle.Model);
+                choice = commonMethods.ReadInt("Do you want to use any of the above vehicles : 1. Yes 2. No >> ");
+                choice = commonMethods.IsValidChoice(choice);
+                if (choice == 1)
+                {
+                    int vehicleChoice = commonMethods.ReadInt("Enter the vehicle number you want to choose : ");
+                    while (vehicleChoice < 1 || vehicleChoice > optionNumber)
+                    {
+                        vehicleChoice = commonMethods.ReadInt("Please enter a valid option : ");
+                    }
+                    ride.Vehicle.Id = vehicles[optionNumber - 1].Id;
+                }
+                else
+                {
+                    Console.WriteLine("Enter your new vehicle data");
+                    ride.Vehicle = vehicleActions.AddVehicle();
+                }
+            }
+            rideService.AddRide(ride);
+
             int viaPointsChoice = commonMethods.ReadInt("Do you want to add Via Points ? 1.Yes 2. No >> ");
             viaPointsChoice = commonMethods.IsValidChoice(viaPointsChoice);
             int viaPointCount = 1;
             string viaPoint;
+            ride.ViaPoints = new List<string>();
+
             while (viaPointsChoice == 1)
             {
                 viaPoint = commonMethods.ReadString("Via Point " + viaPointCount + " : ");
@@ -154,42 +216,8 @@ namespace CarPooling
                 viaPointsChoice = commonMethods.IsValidChoice(viaPointsChoice);
                 viaPointCount += 1;
             }
-            List<Vehicle> vehicles = vehicleService.GetVehiclesByUserId(LoginActions.currentUser.Id);
-            if (vehicles.Count == 1)
-            {
-              Console.WriteLine(" Vehicle Name : " + vehicles[0].Name);
-              choice = commonMethods.ReadInt("Do you want to offer ride with above vehicle : 1. Yes 2. No >> ");
-              choice = commonMethods.IsValidChoice(choice);
-              if (choice == 1) ride.Vehicle = vehicles[0];
-              else ride.Vehicle = vehicleActions.AddVehicle();
-            }
-            else if (vehicles.Count == 0)
-            {
-                ride.Vehicle = vehicleActions.AddVehicle();
-            }
-            else
-            {
-               int optionNumber = 1;
-               foreach (Vehicle vehicle in vehicles)
-               Console.WriteLine(optionNumber + ". Vehicle Name : " + vehicle.Name);
-               choice = commonMethods.ReadInt("Do you want to use any of the above vehicles : 1. Yes 2. No >> ");
-               choice = commonMethods.IsValidChoice(choice);
-               if (choice == 1)
-               { 
-                  int vehicleChoice = commonMethods.ReadInt("Enter the vehicle number you want to choose : ");
-                  while (vehicleChoice < 1 || vehicleChoice > optionNumber)
-                  {
-                    vehicleChoice = commonMethods.ReadInt("Please enter a valid option : ");
-                  }
-                  ride.Vehicle = vehicles[optionNumber - 1];
-               }
-               else
-               {
-                 Console.WriteLine("Enter your new vehicle data");
-                 ride.Vehicle = vehicleActions.AddVehicle();
-               }
-            }
-            rideService.AddRide(ride);
+
+            
             Console.WriteLine("Ride added successfully!!");
             commonMethods.FurtherAction(1);
         }
@@ -209,9 +237,9 @@ namespace CarPooling
                 foreach (Ride ride in offeredRides)
                 {
                     double totalIncome = bookingService.GetTotalIncomeOfRide(ride);
-                    Console.WriteLine(rideNumber + ". " + " From : " + ride.From + " To :  " + ride.To + " Total Seats : " + ride.NumberOfSeats + " Total Income : " + totalIncome);
+                    Console.WriteLine(rideNumber + ". " + " From : " + ride.PickUp + " To :  " + ride.Drop + " Total Seats : " + ride.NumberOfSeats + " Total Income : " + totalIncome);
                     Console.WriteLine(" Date of Ride : " + ride.Date.ToShortDateString() + " Time of Ride : " + ride.Date.TimeOfDay
-                        + " Vehicle Name : " + ride.Vehicle.Name);
+                        + " Vehicle Model : " + ride.Vehicle.Model);
                     Console.WriteLine(" Ride Status : " +Enum.GetName(typeof(RideStatus),ride.Status));
                     rideNumber += 1;
                     Console.WriteLine("-----------------------------------------------------");
@@ -246,10 +274,11 @@ namespace CarPooling
 
         public void CancelRide(Ride ride)
         {
-                rideService.CancelRide(ride.Id);
-                bookingService.CancelAllBookingsByRideId(ride.Id);
-                Console.WriteLine("Ride deleted successfully!!!");
-                commonMethods.FurtherAction(1);
+            ride.Status = (RideStatus)2;
+            rideService.UpdateRide(ride);
+            bookingService.CancelAllBookingsByRideId(ride.Id);
+            Console.WriteLine("Ride deleted successfully!!!");
+            commonMethods.FurtherAction(1);
         }
 
         public void UpdateRide(Ride ride)
@@ -282,7 +311,7 @@ namespace CarPooling
                             if (booking.Status == (BookingStatus)2)
                             {
                                 booking.Status = (BookingStatus)1;
-                                bookingService.ApproveBooking(booking.Id);
+                                bookingService.UpdateBooking(booking);
                             }
                         }
                         //Notify customer with approval of the above ride

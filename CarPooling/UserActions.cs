@@ -1,6 +1,6 @@
-﻿using CarPooling.Interfaces;
-using CarPooling.Models;
-using CarPooling.Services;
+﻿using CarPooling.Concerns;
+using CarPooling.Contracts;
+using CarPooling.Providers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,6 +13,7 @@ namespace CarPooling
         RideActions rideActions = new RideActions();
         VehicleActions vehicleActions = new VehicleActions();
         BookingActions bookingActions = new BookingActions();
+        VehicleTypeActions vehicleTypeActions = new VehicleTypeActions();
         IUserService userService = new UserService();
 
         public void DisplayMethods()
@@ -29,11 +30,27 @@ namespace CarPooling
                 actionNumber += 1;
             }
 
-            int choice = commonMethods.ReadInt("Enter your choice : ");
-            if(choice<0 || choice > actionNumber)
+            int choice;
+            if (LoginActions.currentUser.Name == "admin")
             {
-                Console.WriteLine("Sorry!! Invalid Choice ");
-                DisplayMethods();
+                Console.WriteLine(actionNumber + ". Add/Update VehicleType");
+                choice = commonMethods.ReadInt("Enter your choice : ");
+                if (choice < 0 || choice > actionNumber)
+                {
+                    Console.WriteLine("Sorry!! Invalid Choice ");
+                    DisplayMethods();
+                }
+            }
+
+            else
+            {
+                actionNumber -= 1;
+                choice = commonMethods.ReadInt("Enter your choice : ");
+                if (choice < 0 || choice > actionNumber)
+                {
+                    Console.WriteLine("Sorry!! Invalid Choice ");
+                    DisplayMethods();
+                }
             }
 
             switch(choice)
@@ -61,6 +78,23 @@ namespace CarPooling
 
                 case 8: LoginActions loginActions = new LoginActions();
                     loginActions.LogOut();
+                    break;
+
+                case 9: int decision = commonMethods.ReadInt("Do you want to add/ update the vehicle type : 1. Add Vehicle 2. Update Vehicle 3. Go Back >> ");
+                    while(decision<0 || decision>3)
+                    {
+                        decision = commonMethods.ReadInt("Please enter a valid choice between 1 and 3 : ");
+                    }
+                    switch(decision)
+                    {
+                        case 1: vehicleTypeActions.AddVehicleType();
+                            break;
+                        case 2:
+                            vehicleTypeActions.UpdateVehicleType();
+                            break;
+                        case 3: commonMethods.FurtherAction(1);
+                            break;
+                    }
                     break;
             }
         }

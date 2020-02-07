@@ -3,7 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.960
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarPooling", "CarPooling\CarPooling.csproj", "{20F82D22-9B77-446F-917C-AB760DBE4751}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarPooling", "CarPooling\CarPooling.csproj", "{20F82D22-9B77-446F-917C-AB760DBE4751}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarPooling.API", "CarPooling.API\CarPooling.API.csproj", "{FDE541F0-97BB-47D4-B1F2-02BEDD171840}"
+	ProjectSection(ProjectDependencies) = postProject
+		{20F82D22-9B77-446F-917C-AB760DBE4751} = {20F82D22-9B77-446F-917C-AB760DBE4751}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +20,10 @@ Global
 		{20F82D22-9B77-446F-917C-AB760DBE4751}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{20F82D22-9B77-446F-917C-AB760DBE4751}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{20F82D22-9B77-446F-917C-AB760DBE4751}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDE541F0-97BB-47D4-B1F2-02BEDD171840}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDE541F0-97BB-47D4-B1F2-02BEDD171840}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDE541F0-97BB-47D4-B1F2-02BEDD171840}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDE541F0-97BB-47D4-B1F2-02BEDD171840}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
