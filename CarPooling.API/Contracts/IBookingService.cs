@@ -9,9 +9,9 @@ namespace CarPooling.API.Contracts
     {
         int GetBookingsCount(string rideId, string from, string to);
 
-        bool AddBooking(Booking booking);
+        int AddBooking(Booking booking);
 
-        bool UpdateBooking(Booking booking);
+        int UpdateBooking(Booking booking);
 
         List<Booking> GetBookingsByUserId(string userId);
 

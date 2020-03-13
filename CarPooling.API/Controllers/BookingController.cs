@@ -35,13 +35,13 @@ namespace CarPooling.API.Controllers
         }
 
         [HttpPost("AddBooking")]
-        public bool AddBooking(Booking booking)
+        public int AddBooking(Booking booking)
         {
            return bookingService.AddBooking(booking);
         }
 
         [HttpPut("UpdateBooking")]
-        public bool UpdateBooking(Booking booking)
+        public int UpdateBooking(Booking booking)
         {
             return bookingService.UpdateBooking(booking);
         }

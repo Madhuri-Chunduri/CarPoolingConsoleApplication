@@ -7,7 +7,7 @@ namespace CarPooling.API.Contracts
 {
     public interface IUserService
     {
-        bool AddUser(User user);
+        string AddUser(User user);
 
         User GetUser(string id);
 

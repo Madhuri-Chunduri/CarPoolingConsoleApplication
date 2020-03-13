@@ -22,7 +22,24 @@ namespace CarPooling.API.Providers
             connectionString = configuration.GetSection("Connectionstring").Value;
         }
 
-        public bool AddUser(User user)
+        //public bool AddNewUser(UserDetails user)
+       // {
+       //     user.Id = Guid.NewGuid().ToString();
+       //     string query = "insert into [User](Id,Name,Email,Password) values(@Id,@Name,@Email,@Password)";
+       //     DynamicParameters parameters = new DynamicParameters();
+       //     parameters.Add("Id", user.Id);
+      //      parameters.Add("Name", user.Name);
+       //     parameters.Add("Email", user.Email);
+        //    parameters.Add("Password", user.Password);
+        //    ExtensionObject extensionObject = new ExtensionObject()
+        //    {
+        //        Query = query,
+        //        ConnectionString = connectionString
+        //    };
+        //    return extensionObject.AddOrUpdateItem<UserDetails>(parameters);
+       // }
+
+        public string AddUser(User user)
         {
             user.Id = Guid.NewGuid().ToString();
             string query = "insert into [User](Id,Name,Email,PhoneNumber,Address,Gender,Password) values(@Id,@Name,@Email,@PhoneNumber,@Address,@Gender,@Password)";
@@ -39,7 +56,9 @@ namespace CarPooling.API.Providers
                 Query = query,
                 ConnectionString = connectionString
             };
-            return extensionObject.AddOrUpdateItem<User>(parameters);
+            if (extensionObject.AddOrUpdateItem<User>(parameters))
+                return user.Id;
+            else return null;
         }
 
         public User GetUser(string id)

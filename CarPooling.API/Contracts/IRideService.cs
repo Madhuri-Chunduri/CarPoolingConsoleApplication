@@ -7,7 +7,7 @@ namespace CarPooling.API.Contracts
 {
     public interface IRideService
     {
-        bool AddRide(Ride ride);
+        string AddRide(Ride ride);
 
         List<Ride> GetAllRidesByUserId(string publisherId);
 

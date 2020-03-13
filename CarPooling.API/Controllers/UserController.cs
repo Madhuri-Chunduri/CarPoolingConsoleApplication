@@ -33,8 +33,8 @@ namespace CarPooling.API.Controllers
             return userService.GetUserByMail(email);
         }
 
-        [HttpPost("AddPost")]
-        public bool AddUser([FromBody] User user)
+        [HttpPost("AddUser")]
+        public string AddUser([FromBody] User user)
         {
             return userService.AddUser(user);
         }

@@ -26,29 +26,33 @@ namespace CarPooling.API.Providers
 
         public bool AddViaPoint(ViaPoint viaPoint)
         {
-            string query = "insert into ViaPoint(Id,RideId,Name,Distance) values(@Id,@RideId,@Name,@Distance)";
+            string query = "insert into ViaPoint(Id,RideId,Name,[Index],Distance) values(@Id,@RideId,@Name,@Index,@Distance)";
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("Id", Guid.NewGuid().ToString());
+            string viaPointId = Guid.NewGuid().ToString();
+            parameters.Add("Id", viaPointId);
             parameters.Add("RideId", viaPoint.RideId);
-            parameters.Add("Name", viaPoint.Name);
+            parameters.Add("Name", viaPoint.Name.ToLower());
+            parameters.Add("Index", viaPoint.Index);
             parameters.Add("Distance", viaPoint.Distance);
             ExtensionObject extensionObject = new ExtensionObject()
             {
                 Query = query,
                 ConnectionString = connectionString
             };
-            return extensionObject.AddOrUpdateItem<ViaPoint>(parameters);
+            if (extensionObject.AddOrUpdateItem<ViaPoint>(parameters))
+                return true;
+            else return false;
         }
 
-        public List<string> GetAllViaPoints(string rideId)
+        public List<ViaPoint> GetAllViaPoints(string rideId)
         {
-            string query = "select Name from ViaPoint where RideId='" + rideId + "'";
+            string query = "select * from ViaPoint where RideId='" + rideId + "'";
             ExtensionObject extensionObject = new ExtensionObject()
             {
                 Query = query,
                 ConnectionString = connectionString
             };
-            return extensionObject.GetAllItems<string>();
+            return extensionObject.GetAllItems<ViaPoint>();
         }
 
         public int GetIndex(Ride ride, string viaPoint)

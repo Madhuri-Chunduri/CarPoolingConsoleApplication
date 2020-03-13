@@ -23,23 +23,35 @@ namespace CarPooling.API.Providers
             connectionString = configuration.GetSection("Connectionstring").Value;
         }
 
-        public bool AddVehicle(Vehicle vehicle)
+        public string AddVehicle(Vehicle vehicle)
         {
             string query = "insert into Vehicle(Id,UserId,Model,Number,VehicleTypeId,IsActive) values(@Id,@UserId,@Model,@Number,@vehicleTypeId,@IsActive)";
             vehicle.Id = Guid.NewGuid().ToString();
+            vehicle.IsActive = true;
+
+            string vehicleTypeQuery = "select * from VehicleType where Name='Four-Wheeler'";
+            ExtensionObject vehicleTypeExtensionObject = new ExtensionObject()
+            {
+                Query = vehicleTypeQuery,
+                ConnectionString = connectionString
+            };
+
+            string VehicleTypeId = vehicleTypeExtensionObject.GetItem<VehicleType>().Id;
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("Id", vehicle.Id);
             parameters.Add("UserId", vehicle.UserId);
             parameters.Add("Model", vehicle.Model);
             parameters.Add("Number", vehicle.Number);
-            parameters.Add("VehicleTypeId", vehicle.VehicleType.Id);
+            parameters.Add("VehicleTypeId", VehicleTypeId);
             parameters.Add("IsActive", vehicle.IsActive);
             ExtensionObject extensionObject = new ExtensionObject()
             {
                 Query = query,
                 ConnectionString = connectionString
             };
-            return extensionObject.AddOrUpdateItem<Vehicle>(parameters);
+            extensionObject.AddOrUpdateItem<Vehicle>(parameters);
+
+            return vehicle.Id;
         }
 
         public bool UpdateVehicle(Vehicle vehicle)

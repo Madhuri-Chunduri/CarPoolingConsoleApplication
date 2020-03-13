@@ -27,7 +27,7 @@ namespace CarPooling.API.Controllers
         }
 
         [HttpPost("AddRide")]
-        public bool AddRide([FromBody] Ride ride)
+        public string AddRide([FromBody] Ride ride)
         {
              return rideService.AddRide(ride);
         }

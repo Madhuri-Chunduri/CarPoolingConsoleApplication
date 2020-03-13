@@ -23,6 +23,7 @@ namespace CarPooling.API
             services.AddScoped<IVehicleService, VehicleService>();
             services.AddScoped<ILogService, LogService>();
             services.AddScoped<IVehicleTypeService, VehicleTypeService>();
+            services.AddScoped<IViaPointService, ViaPointService>();
             services.AddScoped<IStatusService,StatusService>();
         }
     }

@@ -7,7 +7,7 @@ namespace CarPooling.API.Contracts
 {
     public interface IVehicleService
     {
-        bool AddVehicle(Vehicle vehicle);
+        string AddVehicle(Vehicle vehicle);
 
         bool UpdateVehicle(Vehicle vehicle);
 

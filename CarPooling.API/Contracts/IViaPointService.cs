@@ -15,6 +15,6 @@ namespace CarPooling.API.Contracts
 
         bool IsViaPointExists(Ride ride, string viaPoint);
 
-        List<string> GetAllViaPoints(string rideId);
+        List<ViaPoint> GetAllViaPoints(string rideId);
     }
 }

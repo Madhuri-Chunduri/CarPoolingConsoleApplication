@@ -12,6 +12,8 @@ namespace CarPooling.API.Concerns
 
         public string Name { get; set; }
 
+        public int Index { get; set; }
+
         public int Distance { get; set; }
     }
 }

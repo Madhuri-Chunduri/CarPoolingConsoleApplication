@@ -23,34 +23,46 @@ namespace CarPooling.API.Providers
             connectionString = configuration.GetSection("ConnectionString").Value;
         }
 
-        public bool AddRide(Ride ride)
+        public string AddRide(Ride ride)
         {
-            string query = "insert into Ride(Id,PublisherId,PickUp,[Drop],StartDate,NumberOfSeats,AvailableSeats,Price,VehicleId,AutoApproveRide,Status) " +
-                    "values(@Id,@PublisherId,@PickUp,@Drop,@StartDate,@NumberOfSeats,@AvailableSeats,@Price,@VehicleId,@AutoApproveRide,@Status)";
+            string query = "insert into Ride(Id,PublisherId,PickUp,[Drop],StartDate,NumberOfSeats,Price,VehicleId,AutoApproveRide,StatusId) " +
+                    "values(@Id,@PublisherId,@PickUp,@Drop,@StartDate,@NumberOfSeats,@Price,@VehicleId,@AutoApproveRide,@Status)";
             DynamicParameters parameters = new DynamicParameters();
             ride.Id = Guid.NewGuid().ToString();
+
+            string statusQuery = "select * from Status where Type='Ride' and Value='Not Started'";
+            ExtensionObject statusExtensionObject = new ExtensionObject()
+            {
+                Query = statusQuery,
+                ConnectionString = connectionString
+            };
+
+            string rideStatusId = statusExtensionObject.GetItem<Status>().Id;
+            ride.AutoApproveRide = false;
+
             parameters.Add("Id", ride.Id);
             parameters.Add("PublisherId", ride.Publisher.Id);
-            parameters.Add("PickUp", ride.PickUp);
-            parameters.Add("Drop", ride.Drop);
+            parameters.Add("PickUp", ride.PickUp.ToLower());
+            parameters.Add("Drop", ride.Drop.ToLower());
             parameters.Add("StartDate", ride.StartDate);
             parameters.Add("NumberOfSeats", ride.NumberOfSeats);
-            parameters.Add("AvailableSeats", ride.AvailableSeats);
+            //parameters.Add("AvailableSeats", ride.AvailableSeats);
             parameters.Add("Price", ride.Price);
             parameters.Add("VehicleId", ride.Vehicle.Id);
             parameters.Add("AutoApproveRide", ride.AutoApproveRide);
-            parameters.Add("Status", ride.Status.Id);
+            parameters.Add("Status", rideStatusId);
             ExtensionObject extensionObject = new ExtensionObject()
             {
                 Query = query,
                 ConnectionString = connectionString
             };
-            return extensionObject.AddOrUpdateItem<Ride>(parameters);
+            if (extensionObject.AddOrUpdateItem<Ride>(parameters)) return ride.Id;
+            else return null;
         }
 
         public List<Ride> GetAllRidesByUserId(string publisherId)
         {
-            string query = "select r.PickUp,r.[Drop],r.StartDate,r.NumberOfSeats,r.Price,s.Value,v.Model," +
+            string query = "select r.Id,r.PickUp,r.[Drop],r.StartDate,r.NumberOfSeats,r.Price,s.Value,v.Model,v.Id," +
                 "v.Number,u.Name,u.PhoneNumber from Ride r inner join Vehicle v on r.VehicleId=v.Id " +
                 "inner join Status s on s.Id=r.StatusId inner join [User] u on v.UserId=u.Id where r.PublisherId='" + publisherId + "'";
 
@@ -79,6 +91,8 @@ namespace CarPooling.API.Providers
 
         public List<Ride> FindRide(string from, string to)
         {
+            from = from.ToLower();
+            to = to.ToLower();
             List<Ride> requiredRides = new List<Ride>();
             int availableSeats = 0;
 
@@ -100,6 +114,21 @@ namespace CarPooling.API.Providers
                 if (availableSeats > 0)
                 {
                     ride.AvailableSeats = availableSeats;
+                    query = "select id,name,phoneNumber from [User] where Id= (select publisherId from Ride where Id='" + ride.Id+"')";
+                    ExtensionObject publisherExtensionObject = new ExtensionObject()
+                    {
+                        Query = query,
+                        ConnectionString = connectionString
+                    };
+
+                    ride.Publisher = publisherExtensionObject.GetItem<User>();
+                    query = "select value from Status where Id=(select statusId from Ride where Id='" + ride.Id + "')";
+                    ExtensionObject statusExtensionObject = new ExtensionObject()
+                    {
+                        Query = query,
+                        ConnectionString = connectionString
+                    };
+                    ride.Status = statusExtensionObject.GetItem<Status>();
                     requiredRides.Add(ride);
                 }
             }
@@ -137,17 +166,54 @@ namespace CarPooling.API.Providers
 
         public bool UpdateRide(Ride ride)
         {
-            string query = "update Ride set AutoApproveRide=@AutoApproveRide, VehicleId=@VehicleId where Id=@Id";
-            DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("Id", ride.Id);
-            parameters.Add("AutoApproveRide", ride.AutoApproveRide);
-            parameters.Add("VehicleId", ride.Vehicle.Id);
-            ExtensionObject extensionObject = new ExtensionObject()
+            if (ride.Status.Value == "Cancelled")
             {
-                Query = query,
-                ConnectionString = connectionString
-            };
-            return extensionObject.AddOrUpdateItem<Booking>(parameters);
+                string statusQuery = "select * from Status where Type='Ride' and Value='Cancelled'";
+                ExtensionObject statusExtensionObject = new ExtensionObject()
+                {
+                    Query = statusQuery,
+                    ConnectionString = connectionString
+                };
+
+                string rideStatusId = statusExtensionObject.GetItem<Status>().Id;
+                string query = "update Ride set StatusId=@StatusId where Id=@Id";
+                ExtensionObject extensionObject = new ExtensionObject()
+                {
+                    Query = query,
+                    ConnectionString = connectionString
+                };
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("Id", ride.Id);
+                parameters.Add("StatusId", rideStatusId);
+                if (extensionObject.AddOrUpdateItem<Ride>(parameters))
+                {
+                    IBookingService bookingService = new BookingService(configuration);
+                    return bookingService.CancelAllBookingsByRideId(ride.Id);
+                }
+                return false;
+            }
+            else {
+                string query = "update Ride set AutoApproveRide=@AutoApproveRide, VehicleId=@VehicleId, StatusId=@statusId where Id=@Id";
+                string statusQuery = "select * from Status where Type='Ride' and Value='" + ride.Status.Value + "'";
+                ExtensionObject statusExtensionObject = new ExtensionObject()
+                {
+                    Query = statusQuery,
+                    ConnectionString = connectionString
+                };
+                string statusId = statusExtensionObject.GetItem<Status>().Id;
+
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("Id", ride.Id);
+                parameters.Add("AutoApproveRide", ride.AutoApproveRide);
+                parameters.Add("VehicleId", ride.Vehicle.Id);
+                parameters.Add("StatusId", statusId);
+                ExtensionObject extensionObject = new ExtensionObject()
+                {
+                    Query = query,
+                    ConnectionString = connectionString
+                };
+                return extensionObject.AddOrUpdateItem<Booking>(parameters);
+            }
         }
     }
 }

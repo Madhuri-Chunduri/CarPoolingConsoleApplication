@@ -34,7 +34,7 @@ namespace CarPooling.API.Controllers
         }
 
         [HttpPost("AddVehicle")]
-        public bool AddVehicle([FromBody] Vehicle vehicle)
+        public string AddVehicle([FromBody] Vehicle vehicle)
         {
             return vehicleService.AddVehicle(vehicle); 
         }
